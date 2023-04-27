@@ -37,14 +37,18 @@ def update_variables():
         end_h = int(request.form.get("endHour"))
     return ''
 
+uploaded_file_name = None
+
 @app.route('/process', methods=['POST'])
 def process():
+    global uploaded_file_name
     uploaded_file = request.files['file']
     if uploaded_file:
         uploaded_file.save('uploaded_file.3dm')
         update_variables()
         run_sunlight_analysis('uploaded_file.3dm', start_m, start_d, start_h, end_m, end_d, end_h)
     return redirect(url_for('index'))
+
 
 def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d, end_h):
     compute_url = "http://localhost:6500/"
