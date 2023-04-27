@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link type="text/css" rel="stylesheet" href="../static/style.css" />
+    <title>digitaldesigngroup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <script
+    async
+    src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+  ></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.151.3/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.151.3/examples/jsm/"
+      }
+    }
+  </script>
+  <body>
+    <canvas class="webgl"></canvas>
+    <nav>
+      <a href="https://digitaldesign.nettletontribe.com.au"
+        >nettletontribe digitaldesign</a
+      >
+      <ul>
+        <li>
+          <a href="https://digitaldesign.streamlit.app/" target="_blank"
+            >early planning</a
+          >
+        </li>
+        <li>
+          <a href="https://netcarbon.streamlit.app/" target="_blank"
+            >embodied carbon</a
+          >
+        </li>
+      </ul>
+
+    <form
+      action="/process"
+      method="POST"
+      enctype="multipart/form-data"
+      class="upload-form"
+    >
+      <div class="upload-wrapper">
+        <label for="file-upload" class="upload-label">Upload 3DM</label>
+        <input type="file" name="file" id="file-upload" class="upload-input" />
+        <button type="submit" class="upload-btn">RUN ANALYSIS</button>
+      </div>
+    </form>
+
+    <form action="{{ url_for('update_variables') }}" method="POST" class="variables-form">
+      <div class="slider-wrapper">
+        <label for="start_month">Start Month:</label>
+        <input type="number" id="start_month" name="startMonth" min="1" max="12" value="{{ start_m }}" /><br />
+
+        <label for="start_day">Start Day:</label>
+        <input type="number" id="start_day" name="startDay" min="1" max="31" value="{{ start_d }}" /><br />
+
+        <label for="start_hour">Start Hour:</label>
+        <input type="number" id="start_hour" name="startHour" min="0" max="23" value="{{ start_h }}" /><br />
+
+        <label for="end_month">End Month:</label>
+        <input type="number" id="end_month" name="endMonth" min="1" max="12" value="{{ end_m }}" /><br />
+
+        <label for="end_day">End Day:</label>
+        <input type="number" id="end_day" name="endDay" min="1" max="31" value="{{ end_d }}" /><br />
+
+        <label for="end_hour">End Hour:</label>
+        <input type="number" id="end_hour" name="endHour" min="0" max="23" value="{{ end_h }}" /><br />
+      </div>
+    </form>
+    </nav>
+    <div id="result"></div>
+    <script
+
+    type="module"
+    src="{{ url_for('static', filename='js/main.js') }}"
+    ></script>
+  </body>
+</html>

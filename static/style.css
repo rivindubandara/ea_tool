@@ -1,0 +1,162 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body,
+html {
+  overflow-x: hidden;
+  font-family: "Roboto Mono", monospace;
+}
+
+.webgl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+nav {
+  color: white;
+  z-index: 1;
+  position: fixed;
+  padding: 4rem 5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: black;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+}
+
+nav ul {
+  list-style: none;
+  margin-top: 2rem;
+  font-weight: lighter;
+}
+
+nav li {
+  margin-bottom: 15px;
+  transform: translate(0px, 600px);
+}
+
+nav a {
+  text-decoration: none;
+  color: white;
+  font-weight: bolder;
+}
+
+.title {
+  position: absolute;
+  font-size: 5rem;
+  left: 50%;
+  top: 75%;
+  transform: translate(-50%, -75%);
+  background-color: white;
+}
+
+.lil-gui {
+  --text-color: white;
+  --widget-color: var(--widget-color);
+  --padding: 15px;
+  --spacing: 5px;
+  --background-color: black;
+  align-items: left;
+  --title-background-color: var(--title-background-color);
+  margin-top: 250px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3) inset;
+}
+
+.lil-gui .title {
+  top: -80px;
+  padding: 0px;
+  font-size: 50px;
+}
+
+.lil-gui.root > .title {
+  color: pink;
+}
+.lil-gui.closed > .title:before {
+  content: "";
+  padding: 20px;
+}
+.lil-gui .title:before {
+  content: "";
+  padding: 20px;
+}
+
+.upload-form {
+  position: absolute;
+  transform: translate(-30px,100px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0px;
+  background-color: black;
+  z-index: 2;
+}
+.upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 200px;
+}
+
+.upload-label {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.upload-input {
+  font-size: 1rem;
+  padding: 10px;
+  border: 2px solid black;
+  border-radius: 4px;
+  background-color: black;
+  color: white;
+  width: 100%;
+  max-width: 400px;
+}
+
+.upload-btn {
+  font-size: 1rem;
+  padding: 5px;
+  border-radius: 2px;
+  border-color: white;
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+  transform: translate(0px, 400px);
+}
+
+.upload-btn:hover {
+  background-color: peachpuff;
+}
+
+.sidebar {
+  position: relative;
+  width: 200px;
+  height: 100%;
+  background-color: black;
+}
+
+.slider-wrapper{
+  display: flex;
+  flex-direction: column;
+  color: white;
+  transform: translate(0px, -325px);
+  width: 150px;
+}
