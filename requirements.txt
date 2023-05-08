@@ -1,5 +1,3 @@
 flask
-json
-requests
 rhino3dm
 gunicorn
