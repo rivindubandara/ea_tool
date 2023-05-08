@@ -143,7 +143,6 @@ function submitForm() {
   var xhr = new XMLHttpRequest();
   xhr.open('POST', form.action, true);
   xhr.onload = function() {
-    // Handle response from server if necessary
   };
   xhr.send(formData);
   return false;
