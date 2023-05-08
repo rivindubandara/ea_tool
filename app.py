@@ -259,4 +259,4 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
     return total_sunlight_hours, total_radiation_hours
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host ='0.0.0.0', port=5000)
