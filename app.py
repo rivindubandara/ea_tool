@@ -1,19 +1,16 @@
-from flask import Flask, request, redirect, url_for, send_file, render_template
-import os
+from flask import Flask, request, redirect, url_for, send_file, render_template, jsonify
 import json
 import requests
 import rhino3dm as rh
-from pyproj import *
 import base64
-import compute_rhino3d.Util
-from flask import jsonify
-import time
 
 app = Flask(__name__, static_url_path='/static')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('index.html')
+
 
 @app.route("/update_variables", methods=["POST"])
 def update_variables():
@@ -35,25 +32,28 @@ def update_variables():
     if request.form.get("endHour"):
         global end_h
         end_h = int(request.form.get("endHour"))
-    return ''
+    return redirect(request.referrer)
 
-uploaded_file_name = None
 
 @app.route('/process', methods=['POST'])
 def process():
-    global uploaded_file_name
     uploaded_file = request.files['file']
     if uploaded_file:
         uploaded_file.save('uploaded_file.3dm')
         update_variables()
-        run_sunlight_analysis('uploaded_file.3dm', start_m, start_d, start_h, end_m, end_d, end_h)
+        total_sunlight_hours, total_radiation_hours = run_sunlight_analysis('uploaded_file.3dm', start_m,
+                              start_d, start_h, end_m, end_d, end_h)
+        return render_template('index.html', total_sunlight_hours=total_sunlight_hours, total_radiation_hours=total_radiation_hours)
     return redirect(url_for('index'))
 
+@app.route('/process', methods=['GET'])
+def process_get():
+    return redirect(url_for('index'))
 
 def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d, end_h):
+    total_sunlight_hours = None
+    total_radiation_hours = None
     compute_url = "http://localhost:6500/"
-    compute_rhino3d.Util.url = compute_url
-    compute_rhino3d.Util.authToken = ""
 
     class __Rhino3dmEncoder(json.JSONEncoder):
         def default(self, o):
@@ -72,11 +72,9 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
         if layers[layer_index].Name == "Geometry":
             geometry_list.append(obj)
 
-    context_breps = [obj.Geometry for obj in context_list if isinstance(
-        obj.Geometry, rh.Extrusion)]
+    context_breps = [obj.Geometry for obj in context_list]
 
-    geometry_breps = [obj.Geometry for obj in geometry_list if isinstance(
-        obj.Geometry, rh.Extrusion)]
+    geometry_breps = [obj.Geometry for obj in geometry_list]
 
     serialized_context = []
     for brep in context_breps:
@@ -87,22 +85,17 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
     for brep in geometry_breps:
         serialized_brep = json.dumps(brep, cls=__Rhino3dmEncoder)
         serialized_geometry.append(serialized_brep)
-    
-    context_list = []
-    for i, brep in enumerate(serialized_context):
-        context_list.append(
+
+    context_list = [{"ParamName": "context", "InnerTree": {}}]
+    for i, brep_context in enumerate(serialized_context):
+        key = f"{{{i};0}}"
+        value = [
             {
-                "ParamName": "context",
-                "InnerTree": {
-                    f"{{ {i}; }}": [
-                        {
-                            "type": "Rhino.Geometry.Brep",
-                            "data": brep
-                        }
-                    ]
-                }
+                "type": "Rhino.Geometry.Brep",
+                "data": brep_context
             }
-        )
+        ]
+        context_list[0]["InnerTree"][key] = value
 
     geometry_list = []
     for i, brep in enumerate(serialized_geometry):
@@ -224,18 +217,46 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
     sunlight_layer.Name = "Sunlight"
     sunlight_layerIndex = new_rhFile.Layers.Add(sunlight_layer)
 
+    radiation_layer = rh.Layer()
+    radiation_layer.Name = "Radiation"
+    radiation_layerIndex = new_rhFile.Layers.Add(radiation_layer)
+
     for val in response_object:
         paramName = val['ParamName']
-        innerTree = val['InnerTree']
-        for key, innerVals in innerTree.items():
-            for innerVal in innerVals:
-                if 'data' in innerVal:
-                    data = json.loads(innerVal['data'])
-                    mesh_geo = rh.CommonObject.Decode(data)
-                    att = rh.ObjectAttributes()
-                    att.LayerIndex = sunlight_layerIndex
-                    new_rhFile.Objects.AddMesh(mesh_geo, att)
+        if paramName == 'RH_OUT:mesh':
+            innerTree = val['InnerTree']
+            for key, innerVals in innerTree.items():
+                for innerVal in innerVals:
+                    if 'data' in innerVal:
+                        data = json.loads(innerVal['data'])
+                        geo = rh.CommonObject.Decode(data)
+                        att = rh.ObjectAttributes()
+                        att.LayerIndex = sunlight_layerIndex
+                        new_rhFile.Objects.AddMesh(geo, att)
+        elif paramName == "RH_OUT:radiation":
+            innerTree = val['InnerTree']
+            for key, innerVals in innerTree.items():
+                for innerVal in innerVals:
+                    if 'data' in innerVal:
+                        data = json.loads(innerVal['data'])
+                        geo = rh.CommonObject.Decode(data)
+                        att = rh.ObjectAttributes()
+                        att.LayerIndex = radiation_layerIndex
+                        new_rhFile.Objects.AddMesh(geo, att)
+        elif paramName == "RH_OUT:total_sunlight":
+            innerTree = val['InnerTree']
+            for key, innerVals in innerTree.items():
+                for innerVal in innerVals:
+                    if 'data' in innerVal:
+                        total_sunlight_hours = round(float(json.loads(innerVal['data'])), 2)
+        elif paramName == "RH_OUT:total_radiation":
+            innerTree = val['InnerTree']
+            for key, innerVals in innerTree.items():
+                for innerVal in innerVals:
+                    if 'data' in innerVal:
+                        total_radiation_hours = round(float(json.loads(innerVal['data'])), 2)
     new_rhFile.Write("./static/sunlight.3dm")
+    return total_sunlight_hours, total_radiation_hours
 
 if __name__ == '__main__':
     app.run(debug=True)

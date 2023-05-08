@@ -13,21 +13,21 @@ function init() {
   THREE.Object3D.DEFAULT_UP.set( 0, 0, 1 );
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
-  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setPixelRatio( 2 );
   renderer.setSize( window.innerWidth, window.innerHeight );
   renderer.outputEncoding = THREE.sRGBEncoding;
   document.body.appendChild( renderer.domElement );
 
-  camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
-  camera.position.set( 40, 40, 150 );
+  camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
+  camera.position.set( 40, -40, 50 );
 
   scene = new THREE.Scene();
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
   
   const directionalLight = new THREE.DirectionalLight( 0xffffff, 2 );
-  directionalLight.position.set( 0, 0, 2 );
+  directionalLight.position.set( 20, 40, 100);
   scene.add( directionalLight );
 
   const loader = new Rhino3dmLoader();
@@ -43,6 +43,14 @@ function init() {
   } );
 
   controls = new OrbitControls( camera, renderer.domElement );
+  controls.enableZoom = true;
+  controls.enableDamping = true;
+  controls.dampingDactor = 0.05;
+
+  controls.minDistance = 100;
+	controls.maxDistance = 500;
+
+  controls.maxPolarAngle = Math.PI / 2;
 
   window.addEventListener( 'resize', resize );
   
@@ -124,14 +132,26 @@ function animate() {
 
   controls.update();
   renderer.render( scene, camera );
-
+  renderer.setPixelRatio(2)
   requestAnimationFrame( animate );
 
 }
 
+function submitForm() {
+  var form = document.getElementById('variables-form');
+  var formData = new FormData(form);
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', form.action, true);
+  xhr.onload = function() {
+    // Handle response from server if necessary
+  };
+  xhr.send(formData);
+  return false;
+}
+
 function initGUI( layers ) {
   gui = new GUI({ 
-  title: 'layers',
+  title: '<i class="fa-solid fa-layer-group"></i>',
   });
 
   for ( let i = 0; i < layers.length; i ++ ) {
