@@ -25,7 +25,7 @@ for obj in rhFile.Objects:
     layer_index = obj.Attributes.LayerIndex
     if layers[layer_index].Name == "Buildings":
         context_list.append(obj)
-    if layers[layer_index].Name == "Geometry":
+    elif layers[layer_index].Name == "Geometry":
         geometry_list.append(obj)
 
 context_breps = [obj.Geometry for obj in context_list if isinstance(
@@ -79,7 +79,9 @@ geo_payload = {
     "values": context_list + geometry_list
 }
 
-res = requests.post(compute_url + "grasshopper", json=geo_payload, headers=headers)
+res = requests.post(
+    f"{compute_url}grasshopper", json=geo_payload, headers=headers
+)
 
 response_object = json.loads(res.content)['values']
 

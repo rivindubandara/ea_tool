@@ -37,8 +37,7 @@ def update_variables():
 
 @app.route('/process', methods=['POST'])
 def process():
-    uploaded_file = request.files['file']
-    if uploaded_file:
+    if uploaded_file := request.files['file']:
         uploaded_file.save('uploaded_file.3dm')
         update_variables()
         total_sunlight_hours, total_radiation_hours = run_sunlight_analysis('uploaded_file.3dm', start_m,
@@ -69,7 +68,7 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
         layer_index = obj.Attributes.LayerIndex
         if layers[layer_index].Name == "Buildings":
             context_list.append(obj)
-        if layers[layer_index].Name == "Geometry":
+        elif layers[layer_index].Name == "Geometry":
             geometry_list.append(obj)
 
     context_breps = [obj.Geometry for obj in context_list]
@@ -97,22 +96,15 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
         ]
         context_list[0]["InnerTree"][key] = value
 
-    geometry_list = []
-    for i, brep in enumerate(serialized_geometry):
-        geometry_list.append(
-            {
-                "ParamName": "geo",
-                "InnerTree": {
-                    f"{{ {i}; }}": [
-                        {
-                            "type": "Rhino.Geometry.Brep",
-                            "data": brep
-                        }
-                    ]
-                }
-            }
-        )
-
+    geometry_list = [
+        {
+            "ParamName": "geo",
+            "InnerTree": {
+                f"{{ {i}; }}": [{"type": "Rhino.Geometry.Brep", "data": brep}]
+            },
+        }
+        for i, brep in enumerate(serialized_geometry)
+    ]
     epw_dict = {
         "ParamName": "epw",
         "InnerTree": {
@@ -209,7 +201,7 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
         "values": context_list + geometry_list + [epw_dict] + [start_m_dict] + [start_d_dict] + [start_h_dict] + [end_m_dict] + [end_d_dict] + [end_h_dict]
     }
 
-    res = requests.post(compute_url + "grasshopper", json=geo_payload)
+    res = requests.post(f"{compute_url}grasshopper", json=geo_payload)
     response_object = json.loads(res.content)['values']
 
     new_rhFile = rh.File3dm.Read(uploaded_file)
@@ -243,18 +235,18 @@ def run_sunlight_analysis(uploaded_file, start_m, start_d, start_h, end_m, end_d
                         att = rh.ObjectAttributes()
                         att.LayerIndex = radiation_layerIndex
                         new_rhFile.Objects.AddMesh(geo, att)
-        elif paramName == "RH_OUT:total_sunlight":
-            innerTree = val['InnerTree']
-            for key, innerVals in innerTree.items():
-                for innerVal in innerVals:
-                    if 'data' in innerVal:
-                        total_sunlight_hours = round(float(json.loads(innerVal['data'])), 2)
         elif paramName == "RH_OUT:total_radiation":
             innerTree = val['InnerTree']
             for key, innerVals in innerTree.items():
                 for innerVal in innerVals:
                     if 'data' in innerVal:
                         total_radiation_hours = round(float(json.loads(innerVal['data'])), 2)
+        elif paramName == "RH_OUT:total_sunlight":
+            innerTree = val['InnerTree']
+            for key, innerVals in innerTree.items():
+                for innerVal in innerVals:
+                    if 'data' in innerVal:
+                        total_sunlight_hours = round(float(json.loads(innerVal['data'])), 2)
     new_rhFile.Write("./static/sunlight.3dm")
     return total_sunlight_hours, total_radiation_hours
 
